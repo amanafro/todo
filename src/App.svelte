@@ -1,64 +1,70 @@
 <script>
-  import Popup from "./lib/Popup.svelte";
-  let newItem = "";
-  let searchTerm = "";
+  let newItem = '';
+  let newCategory = "";
+  let fromDate = "";
+  let toDate = "";
+  let todoList = [];
 
-  export let categories = ["Sport", "Work/School", "Others", "Appointment"];
 
-  let todoList = [
-    { text: "Write my first post", status: true, category: "Work/School" },
-    { text: "Upload the post to the blog", status: false, category: "Work/School" },
-    { text: "Publish the post at Facebook", status: false, category: "Social Media" },
-  ];
+  if (localStorage.getItem('todos')) {
+      todoList = JSON.parse(localStorage.getItem('todos'));
+    }
 
   function addToList() {
-    todoList = [...todoList, { text: newItem, status: false, category: categories[0] }];
-    newItem = "";
-  }
-
-  let showInput = false;
-
-  function filterTodoList(selectedCategory) {
-    if (selectedCategory === "All posts") {
-      return todoList.filter((item) => item.text.toLowerCase().startsWith(searchTerm.toLowerCase()));
+    if (newItem.trim()) { // Check if input is not empty
+      todoList.push({
+        text: newItem,
+        status: false,
+        category: newCategory,
+        fromDate: fromDate,
+        toDate: toDate,
+      });
+      newItem = '';
+      newCategory = '';
+      fromDate = null;
+      toDate = null;
+      saveToLocalStorage(); // Save updated list after adding
     }
-    return todoList.filter(
-            (item) => item.category === selectedCategory && item.text.toLowerCase().startsWith(searchTerm.toLowerCase())
-    );
   }
+
 
   function removeFromList(index) {
     todoList.splice(index, 1);
+    saveToLocalStorage();
   }
 
-  let selectedCategory = "All posts";
+  function saveToLocalStorage() {
+    localStorage.setItem('todos', JSON.stringify(todoList));
+  }
+
+  let showInput = false;
 </script>
 
-<input id="search-input" type="text" placeholder="Search todos" on:input={(event) => (searchTerm = event.target.value)}/>
-<select id="todo-category" on:change={(event) => (selectedCategory = event.target.value)}>
-  <option value="All posts">All posts</option>
-  <option value="Sport">Sport</option>
-  <option value="Work/School">Work/School</option>
-  <option value="Others">Others</option>
-  <option value="Appointment">Appointment</option>
-</select>
-
-<button on:click={() => (showInput = !showInput)}>Add</button>
-
-<br />
+<button on:click={() => showInput = !showInput} type="button">Add New</button>
 
 {#if showInput}
-  <Popup/>
-{/if}
+<input bind:value={newItem} type="text" placeholder="new todo item..">
+<select bind:value={newCategory}>
+  <option value="">Select Category</option>
+  <option value="Blog">Blog</option>
+  <option value="Social Media">Social Media</option>
+</select>
+<input type="date" bind:value={fromDate} />
+<input type="date" bind:value={toDate} />
+<button on:click={addToList}>Add</button>
+  {/if}
 
-<br />
-
-{#each filterTodoList(selectedCategory) as item, index}
-  <input bind:checked={item.status} type="checkbox" />
+<br/>
+{#each todoList as item, index}
+  <input bind:checked={item.status} type="checkbox">
   <span class:checked={item.status}>{item.text}</span>
-  <button on:click={() => removeFromList(index)}>Delete</button>
-  <br />
+  <span> - Category: {item.category}</span>
+  <span> - From: {item.fromDate ? new Date(item.fromDate).toLocaleDateString() : 'No Due Date'}</span>
+  <span> - To: {item.toDate ? new Date(item.toDate).toLocaleDateString() : 'No Due Date'}</span>
+  <span on:click={() => removeFromList(index)}>❌</span>
+  <br/>
 {/each}
+
 
 <style>
   .checked {
