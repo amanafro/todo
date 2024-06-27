@@ -77,3 +77,14 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.modal {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  border: #1a1a1a solid 1px;
+  padding:2rem;
+  width: 75%;
+  border-radius: 1rem;
+}
+

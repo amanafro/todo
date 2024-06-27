@@ -1,72 +1,106 @@
 <script>
-  let newItem = '';
-  let newCategory = "";
-  let fromDate = "";
-  let toDate = "";
-  let todoList = [];
-  let searchTerm = "";
+  import {derived} from "svelte/store";
 
+  let newTodo = '';
+  let kategorie = "";
+  let vonDatum = "";
+  let bisDatum = "";
+  let todoListe = [];
+  let suche = "";
+  let gewaehltekategorie = "All posts";
 
   if (localStorage.getItem('todos')) {
-    todoList = JSON.parse(localStorage.getItem('todos'));
+    todoListe = JSON.parse(localStorage.getItem('todos'));
   }
 
-  function addToList() {
-    if (newItem.trim()) { // Check if input is not empty
-      todoList.push({
-        text: newItem,
+  function zuListeZufuegen() {
+    if (newTodo.trim()) {
+      todoListe.push({
+        text: newTodo,
         status: false,
-        category: newCategory,
-        fromDate: fromDate,
-        toDate: toDate,
+        category: kategorie,
+        fromDate: vonDatum,
+        toDate: bisDatum,
       });
-      newItem = '';
-      newCategory = '';
-      fromDate = null;
-      toDate = null;
-      saveToLocalStorage(); // Save updated list after adding
+      newTodo = '';
+      kategorie = '';
+      vonDatum = null;
+      bisDatum = null;
+      alert("Ihr Todo wurde erfolgreich hinzugefügt.");
+      LocalStorage();
     }
   }
 
-
-  function removeFromList(index) {
-    todoList.splice(index, 1);
-    saveToLocalStorage();
+  function entfernenVonListe(index) {
+    todoListe.splice(index, 1);
+    LocalStorage();
   }
 
-  function saveToLocalStorage() {
-    localStorage.setItem('todos', JSON.stringify(todoList));
+  let debounceTimeout;
+
+  function LocalStorage() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      localStorage.setItem('todos', JSON.stringify(todoListe));
+    }, 100);
   }
 
-  let showInput = false;
+  function filterTodoListe(searchTerm, selectedCategory) {
+    return todoListe.filter((item) => {
+      const textMatch = item.text.toLowerCase().includes(searchTerm.toLowerCase());
+      const categoryMatch = selectedCategory === "All posts" || item.category === selectedCategory;
+      return textMatch && categoryMatch;
+    });
+  }
+
+  function suchEingabe(event) {
+    suche = event.target.value;
+  }
+
+  let showInput = true;
 </script>
 
-<input bind:value={searchTerm} type="search" placeholder="Search...">
-<button on:click={() => showInput = !showInput} type="button">Add New</button>
+<input bind:value={suche} type="search" placeholder="Search..." on:input={suchEingabe}>
+<select id="todo-category" on:change={(event) => (gewaehltekategorie = event.target.value)}>
+  <option value="All posts">All posts</option>
+  <option value="Sport">Sport</option>
+  <option value="Work/School">Work/School</option>
+  <option value="Others">Others</option>
+  <option value="Appointment">Appointment</option>
+</select>
+<button on:click={() => (showInput = !showInput)}>Add</button>
 <br><br><br>
-{#if showInput}
-  <input bind:value={newItem} type="text" placeholder="new todo item..">
-  <select bind:value={newCategory}>
-    <option value="">Select Category</option>
-    <option value="Blog">Blog</option>
-    <option value="Social Media">Social Media</option>
-  </select>
-  <input type="date" bind:value={fromDate} />
-  <input type="date" bind:value={toDate} />
-  <button on:click={addToList}>Add</button>
-{/if}
+
+{status}
 
 
+<div>
+  {#if showInput}
+    <div class="modal">
+    <input bind:value={newTodo} type="text" placeholder="new todo item.." required>
+    <select bind:value={kategorie} required>
+      <option value="All posts">All posts</option>
+      <option value="Sport">Sport</option>
+      <option value="Work/School">Work/School</option>
+      <option value="Others">Others</option>
+      <option value="Appointment">Appointment</option>
+    </select>
+    <input type="date" bind:value={vonDatum} required/>
+    <input type="date" bind:value={bisDatum} required/>
+    <button on:click={zuListeZufuegen}>Add</button>
+    </div>
+  {/if}
+</div>
 
 <br/>
-{#each todoList as item, index}
+{#each filterTodoListe(suche ,gewaehltekategorie) as item, index}
   <div>
     <input bind:checked={item.status} type="checkbox">
     <span class:checked={item.status}>{item.text}</span>
-    <span> - Category: {item.category}</span>
-    <span> - From: {item.fromDate ? new Date(item.fromDate).toLocaleDateString() : 'No Due Date'}</span>
-    <span> - To: {item.toDate ? new Date(item.toDate).toLocaleDateString() : 'No Due Date'}</span>
-    <button on:click={() => removeFromList(index)}>Löschen</button>
+    <span> - Category: {item.kategorie}</span>
+    <span> - From: {item.vonDatum ? new Date(item.vonDatum).toLocaleDateString() : 'No Due Date'}</span>
+    <span> - To: {item.bisDatum ? new Date(item.bisDatum).toLocaleDateString() : 'No Due Date'}</span>
+    <button on:click={() => entfernenVonListe(index)}>Löschen</button>
     <br/>
   </div>
 {/each}
