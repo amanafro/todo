@@ -1,117 +1,268 @@
 <script>
-let newTodoText = '';
-let kategorie = "";
-let vonDatum = "";
-let bisDatum = "";
-let beschreibung = "";
-let todoListe = [];
-let suche = "";
-let gewaehltekategorie = "All posts";
 
-if (localStorage.getItem('todos')) {
-        todoListe = JSON.parse(localStorage.getItem('todos'));
-}
+  // alle attribute oder felder die ich brauche werden hier aufgelistet
+  let title = "";
+  let category = "";
+  let startDate = null;
+  let endDate = null;
+  let description = "";
+  let todoList = [];
+  let searchText = "";
+  let selectedCategory = "All posts";
+  let author = "";
+  let isUrgent = null;
+  let priority = null;
 
-function zuListeZufuegen() {
-        if (newTodoText.trim()) {
-        todoListe = [
-        ...todoListe,
-        { newTodoText: newTodoText, beschreibung: beschreibung, status: false, kategorie: kategorie, vonDatum: vonDatum, bisDatum: bisDatum },
-        ];
-        newTodoText = '';
-        beschreibung = "";
-        kategorie = '';
-        vonDatum = null;
-        bisDatum = null;
-        alert("Ihr Todo wurde erfolgreich hinzugef?gt.");
-        LocalStorage();
-}
-}
+  // todos werden aus dem localstorage aufgelistet
 
-function entfernenVonListe(index) {
-        todoListe.splice(index, 1);
-        LocalStorage();
-}
+  if (localStorage.getItem('todos')) {
+    todoList = JSON.parse(localStorage.getItem('todos'));
+  }
 
-let debounceTimeout;
+  // hier werden die attribute aufgelistet, validateInput() schaut ob krietrien eingehalten sind oder nicht
+  function addToDoList() {
+    const isValid = validateInput();
 
-function LocalStorage() {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-        localStorage.setItem('todos', JSON.stringify(todoListe));
-}, 100);
-}
+    if (isValid) {
+      todoList.push({
+        title,
+        description,
+        status: false,
+        category,
+        startDate,
+        endDate,
+        author,
+        isUrgent,
+        priority,
+      });
+      clearInputFields();
+      alert("Es wurde erfolgreich hinzugefügt😃👍.");
+      localStorageFn();
+    } else {
+      // Handle invalid input
+      alert("Fehler beim Zufügen. Bitte alle Felder korrekt ausfüllen.😟");
+    }
+  }
 
-function filterTodoListe(searchTerm, selectedCategory) {
-        return todoListe.filter((item) => {
-        const textMatch = item.newTodoText.toLowerCase().includes(searchTerm.toLowerCase());
-        const categoryMatch = selectedCategory === "All posts" || item.category === selectedCategory;
-        return textMatch && categoryMatch;
-});
-}
+  // todos werden entfernt
+  function removeFromList(index) {
+    todoList.splice(index, 1);
+    localStorageFn();
+  }
 
-function suchEingabe(event) {
-        suche = event.target.value;
-}
+  let debounceTimeout;
 
-let showInput = false;
+  // todos werden in den localstorage gespeichert
+  function localStorageFn() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      localStorage.setItem('todos', JSON.stringify(todoList));
+    }, 100);
+  }
+
+  // filter funktionen for die kategorie und die suche
+  function filterTodoList(searchText, selectedCategory) {
+    return todoList.filter((item) => {
+      const textMatch = item.title ? item.title.toLowerCase().includes(searchText.toLowerCase()) : false; // Check if newTodoText exists
+      const categoryMatch = selectedCategory === "All posts" || item.category === selectedCategory;
+      return textMatch && categoryMatch;
+    });
+  }
+
+  // diese funktion handelt die sucheeingabe
+
+  function handleSearchInput(event) {
+    searchText = event.target.value;
+  }
+
+  // validateInput() schaut ob krietrien eingehalten sind oder nicht
+
+  function validateInput() {
+    const titleIsValid = title.trim() && title.length <= 255;
+    if (!titleIsValid) {
+      alert("Todo muss Titel haben und es darf nicht über 255 Zeichen sein.❗️");
+      return false;
+    }
+
+    const categoryIsValid = category !== "";
+    if (!categoryIsValid) {
+      return false;
+    }
+
+    const authorIsValid = author.trim() && author.length <= 20;
+    if (!authorIsValid) {
+      alert("Todo muss Autor haben mit max. 20 Zeichen.❗️");
+      return false;
+    }
+
+    const descriptionIsValid = description.trim().length > 0;
+    if (!descriptionIsValid) {
+      return false;
+    }
+    return true;
+  }
+
+  // nach dem man neue todos eingefügt hat, werden diese felder geleert, damit man nicht alles manuell löscht
+  function clearInputFields() {
+    title = "";
+    description = "";
+    author = "";
+    category = "";
+    startDate = null;
+    endDate = null;
+    isUrgent = null;
+    priority = null;
+  }
+
+  let showInput = false;
+
+  let editingTodoIndex = null;
+
+  // das wird gebrauch, damit ein todo spezifisch bearbeitet wird
+  function editTodo(index) {
+    editingTodoIndex = index;
+  }
+
+  // hier wird ein todo verarbeitet, die alten werte werden dirket durch das neue ersetzt
+  function updateTodo() {
+    const editedTodo = { ...todoList[editingTodoIndex] }; // Create a copy
+    editedTodo.title = document.getElementById("edit-title").value;
+    editedTodo.description = document.getElementById("edit-description").value;
+    editedTodo.author = document.getElementById("edit-author").value;
+    editedTodo.category = document.getElementById("edit-category").value;
+    editedTodo.startDate = new Date(document.getElementById("edit-start-date").value);
+    editedTodo.endDate = new Date(document.getElementById("edit-end-date").value);
+
+    editedTodo.isUrgent = document.getElementById("edit-isUrgent").checked;
+    editedTodo.priority = document.getElementById("edit-priority").checked;
+
+    todoList[editingTodoIndex] = editedTodo;
+    editingTodoIndex = null;
+    localStorageFn();
+  }
 
 </script>
+
+<h1>Füge etwas hinzu</h1>
+
 <div class="menu">
-<input bind:value={suche} type="search" placeholder="Search..." on:input={suchEingabe}>
-<select id="todo-category" on:change={(event) => (gewaehltekategorie = event.target.value)}>
+<input bind:value={searchText} type="search" placeholder="Nach Todos suchen" on:input={handleSearchInput}>
+<select id="todo-category" on:change={(event) => (selectedCategory = event.target.value)}>
   <option value="All posts">All posts</option>
+  <option value="Appointment">Termin</option>
+  <option value="Work/School">Arbeit/Schule</option>
   <option value="Sport">Sport</option>
-  <option value="Work/School">Work/School</option>
-  <option value="Others">Others</option>
-  <option value="Appointment">Appointment</option>
+  <option value="Others">Etwas anders</option>
 </select>
-<button on:click={() => (showInput = !showInput)}>Add</button>
+<button on:click={() => (showInput = !showInput)}>Neues Todo?</button>
 </div>
 
-<div>
   {#if showInput}
     <div class="modal">
-      <input bind:value={newTodoText} type="text" placeholder="new todo item.." required>
-      <input bind:value={beschreibung} type="text" placeholder="kurze beschreibung." required>
-      <select bind:value={kategorie} required>
+      <label>Tdoo:</label>
+      <input bind:value={title} type="text" placeholder="Neues Todo hinzufügen" required>
+      <label>Beschreibung:</label>
+      <textarea bind:value={description} rows="8" cols="24" required placeholder="Kurze Beschreibung des Todos"></textarea>
+      <label>Autor:</label>
+      <input bind:value={author} type="text" placeholder="Autor" required>
+      <label>Kategorie:</label>
+      <select bind:value={category} required>
         <option value="All posts">All posts</option>
+        <option value="Appointment">Termin</option>
+        <option value="Work/School">Arbeit/Schule</option>
         <option value="Sport">Sport</option>
-        <option value="Work/School">Work/School</option>
-        <option value="Others">Others</option>
-        <option value="Appointment">Appointment</option>
+        <option value="Others">Etwas anders</option>
       </select>
-      <input type="date" bind:value={vonDatum} required/>
-      <input type="date" bind:value={bisDatum} required/>
-      <button on:click={zuListeZufuegen}>Add</button>
+      <label>
+        Startdatum:
+      <input type="date" bind:value={startDate} required />
+      </label>
+      <label>
+        Enddatum:
+      <input type="date" bind:value={endDate} required/>
+      </label>
+      <label>Dringend?
+      <input bind:checked={isUrgent} type="checkbox" name="Dringen?">
+      </label>
+      <label>Priorität?
+      <input bind:checked={priority} type="checkbox" name="Priorität?SS">
+      </label>
+      <button on:click={addToDoList}>Hinzufügen</button>
     </div>
   {/if}
-</div>
-
-
 
 <br/>
-{#each filterTodoListe(suche ,gewaehltekategorie) as item, index}
+{#each filterTodoList(searchText ,selectedCategory) as item, index}
   <div class="list">
   <div class="todo">
     <div>
     <input bind:checked={item.status} type="checkbox">
-    <span class:checked={item.status}>Todo: {item.newTodoText}</span>
+    <span class:checked={item.status}>Todo: {item.title}</span>
     </div>
-    <span>Category: {item.kategorie}</span>
+    <span>Kategorie: {item.category}</span>
     <br>
-    <span>From: {item.vonDatum ? new Date(item.vonDatum).toLocaleDateString() : 'No Due Date'}</span>
-    <span> - To: {item.bisDatum ? new Date(item.bisDatum).toLocaleDateString() : 'No Due Date'}</span>
+    <span>Von: {item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No Due Date'}</span>
+    <span> - Bis: {item.endDate ? new Date(item.endDate).toLocaleDateString() : 'No Due Date'}</span>
     <br/>
-    <span>Beschreibung: <br>{item.beschreibung}</span>
+    <span>Autor: {item.author}</span>
+    <span>Beschreibung: <br>{item.description}</span>
+    {#if item.priority && item.isUrgent}
+      <span class="bold"> Sofort erledigen!</span>
+    {/if}
+    {#if item.priority && !item.isUrgent}
+      <span class="bold">️ Einplanen und Wohlfühlen </span>
+    {/if}
+    {#if !item.priority && item.isUrgent}
+      <span class="bold">❗️Gib es ab❗️️</span>
+    {/if}
+    {#if !item.priority && !item.isUrgent}
+      <span class="bold"> Weg damit ‍♂️</span>
+    {/if}
     <br>
-    <button on:click={() => entfernenVonListe(index)}>L?schen</button>
+    <button on:click={() => removeFromList(index)}>Löschen</button>
+    <button on:click={() => editTodo(index)}>Bearbeiten</button>
   </div>
   </div>
 {/each}
 
+{#if editingTodoIndex !== null}
+  <div class="modal">
+    <label for="edit-title">Titel:</label>
+    <input id="edit-title" bind:value={todoList[editingTodoIndex].title} type="text" placeholder="new todo item.." required>
+    <label for="edit-description">Beschreibung:</label>
+    <textarea id="edit-description" bind:value={todoList[editingTodoIndex].description} rows="8" cols="24" required></textarea>
+    <label for="edit-author">Autor:</label>
+    <input id="edit-author" bind:value={todoList[editingTodoIndex].author} type="text" placeholder="Autor?">
+
+    <label for="edit-category">Kategorie:</label>
+    <select id="edit-category" bind:value={todoList[editingTodoIndex].category} required>
+      <option value="All posts">All posts</option>
+      <option value="Appointment">Termin</option>
+      <option value="Work/School">Arbeit/Schule</option>
+      <option value="Sport">Sport</option>
+      <option value="Others">Etwas anders</option>
+    </select>
+
+    <label for="edit-start-date">Startdatum:</label>
+    <input type="date" id="edit-start-date" bind:value={todoList[editingTodoIndex].startDate} required min={new Date().toISOString().split('T')[0]}>
+    <label for="edit-end-date">Enddatum:</label>
+    <input type="date" id="edit-end-date" bind:value={todoList[editingTodoIndex].endDate} required>
+
+    <label>Dringend?
+      <input bind:checked={todoList[editingTodoIndex].isUrgent} type="checkbox" name="isUrgent" id="edit-isUrgent">
+    </label>
+    <label>Priorität?
+      <input bind:checked={todoList[editingTodoIndex].priority} type="checkbox" name="priority" id="edit-priority">
+    </label>
+
+    <button on:click={updateTodo}>Speichern</button>
+    <button on:click={() => editingTodoIndex = null}>Abbrechen</button>
+  </div>
+{/if}
+
 <style>
   .checked {
     text-decoration: line-through;
+    color: lime;
   }
 </style>
