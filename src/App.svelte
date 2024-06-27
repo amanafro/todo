@@ -51,34 +51,23 @@
     localStorageFn();
   }
 
-  let debounceTimeout;
-
   // todos werden in den localstorage gespeichert
   function localStorageFn() {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
       localStorage.setItem('todos', JSON.stringify(todoList));
-    }, 100);
-  }
-
-  // filter funktionen for die kategorie und die suche
-  function filterTodoList(searchText, selectedCategory) {
-    return todoList.filter((item) => {
-      const textMatch = item.title ? item.title.toLowerCase().includes(searchText.toLowerCase()) : false; // Check if newTodoText exists
-      const categoryMatch = selectedCategory === "All posts" || item.category === selectedCategory;
-      return textMatch && categoryMatch;
-    });
   }
 
   // diese funktion handelt die sucheeingabe
-
-  function handleSearchInput(event) {
-    searchText = event.target.value;
-    filterTodoList(searchText, selectedCategory);
+  function searchTodoList(searchText) {
+    if (typeof searchText === "string") {
+      console.log("searchText:", searchText);
+      return todoList.filter((item) =>
+                      item.title?.toLowerCase().includes(searchText.toLowerCase())
+      );
+    } else {
+      return todoList;
+    }
   }
-
   // validateInput() schaut ob krietrien eingehalten sind oder nicht
-
   function validateInput() {
     const titleIsValid = title.trim() && title.length <= 255;
     if (!titleIsValid) {
@@ -148,39 +137,39 @@
 <h1>Füge etwas hinzu</h1>
 
 <div class="menu">
-<input bind:value={searchText} type="search" placeholder="Nach Todos suchen" on:input={handleSearchInput}>
-<select id="todo-category" on:change={(event) => (selectedCategory = event.target.value)}>
-  <option value="All posts">All posts</option>
-  <option value="Appointment">Termin</option>
-  <option value="Work/School">Arbeit/Schule</option>
-  <option value="Sport">Sport</option>
-  <option value="Others">Etwas anders</option>
-</select>
+
+  <input bind:value={searchText} type="search" placeholder="Nach Todos suchen" on:input={searchTodoList}>
 <button on:click={() => (showInput = !showInput)}>Neues Todo?</button>
 </div>
 
   {#if showInput}
     <div class="modal">
-      <label>Tdoo:</label>
+      <label>Tddo:<br>
       <input bind:value={title} type="text" placeholder="Neues Todo hinzufügen" required>
-      <label>Beschreibung:</label>
+      </label>
+      <label>Beschreibung:<br>
       <textarea bind:value={description} rows="8" cols="24" required placeholder="Kurze Beschreibung des Todos"></textarea>
-      <label>Autor:</label>
+      </label>
+      <label>Autor:<br>
       <input bind:value={author} type="text" placeholder="Autor" required>
-      <label>Kategorie:</label>
-      <select bind:value={category} required>
-        <option value="All posts">All posts</option>
-        <option value="Appointment">Termin</option>
-        <option value="Work/School">Arbeit/Schule</option>
-        <option value="Sport">Sport</option>
-        <option value="Others">Etwas anders</option>
-      </select>
+      </label>
       <label>
-        Startdatum:
+        Kategorie:<br>
+        <select bind:value={category} required>
+          <option value="All posts">All posts</option>
+          <option value="Appointment">Termin</option>
+          <option value="Work/School">Arbeit/Schule</option>
+          <option value="Sport">Sport</option>
+          <option value="Others">Etwas anders</option>
+        </select>
+      </label>
+
+      <label>
+        Startdatum:<br>
       <input type="date" bind:value={startDate} required />
       </label>
       <label>
-        Enddatum:
+        Enddatum:<br>
       <input type="date" bind:value={endDate} required/>
       </label>
       <label>Dringend?
