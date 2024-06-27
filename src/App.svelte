@@ -24,7 +24,7 @@
     const isValid = validateInput();
 
     if (isValid) {
-      todoList.push({
+      todoList = [...todoList, {
         title,
         description,
         status: false,
@@ -34,7 +34,7 @@
         author,
         isUrgent,
         priority,
-      });
+      }];
       clearInputFields();
       alert("Es wurde erfolgreich hinzugefügt😃👍.");
       localStorageFn();
@@ -47,6 +47,7 @@
   // todos werden entfernt
   function removeFromList(index) {
     todoList.splice(index, 1);
+    todoList = [...todoList];
     localStorageFn();
   }
 
@@ -73,6 +74,7 @@
 
   function handleSearchInput(event) {
     searchText = event.target.value;
+    filterTodoList(searchText, selectedCategory);
   }
 
   // validateInput() schaut ob krietrien eingehalten sind oder nicht
@@ -192,7 +194,7 @@
   {/if}
 
 <br/>
-{#each filterTodoList(searchText ,selectedCategory) as item, index}
+{#each todoList as item, index}
   <div class="list">
   <div class="todo">
     <div>
