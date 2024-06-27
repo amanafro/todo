@@ -74,7 +74,7 @@
 
   function handleSearchInput(event) {
     searchText = event.target.value;
-    filterTodoList(searchText, selectedCategory);
+    // todoList = filterTodoList(searchText, selectedCategory);
   }
 
   // validateInput() schaut ob krietrien eingehalten sind oder nicht
@@ -195,6 +195,7 @@
 
 <br/>
 {#each todoList as item, index}
+  {#if item.category === selectedCategory && item.title.includes(searchText)}
   <div class="list">
   <div class="todo">
     <div>
@@ -225,6 +226,7 @@
     <button on:click={() => editTodo(index)}>Bearbeiten</button>
   </div>
   </div>
+  {/if}
 {/each}
 
 {#if editingTodoIndex !== null}
